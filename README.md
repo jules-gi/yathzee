@@ -1,97 +1,24 @@
 <!-- title: Mise en place d'un environnement -->
 
-# Apprentissage par renforcement - Mise en place d'un environnement
+Reference: [Richard S. Sutton and Andrew G. Barto, Reinforcement Learning, second edition: An Introduction](https://web.stanford.edu/class/psych209/Readings/SuttonBartoIPRLBook2ndEd.pdf)
 
-**Girard Jules - M2 Science des Données - Université de Rouen**
+# What dices to choose when playing Yathzee? A reinforcement learning approach
 
-L'objectif de ce travail est de mettre en forme les éléments nécessaires à la mise en place d'un environnement d'apprentissage par renforcement, dans le but d'apprendre la meilleure stratégie de choix de dés dans le contexte du Yathzee (ou Yam's). Pour rappel, le but du jeu est de réaliser au plus trois lancés de dés avant de choisir un certain motif nous rapportant un certain nombre de points.
+As an introduction to reinforcement learning, the final project of my master's course was to set up an environment to teach to an AI (called "agent") how to play a turn of Yathzee (or Yam's). For this, I used Python! If you are not familiar with the Yathzee, [Wikipedia](https://en.wikipedia.org/wiki/Yahtzee) explain the rules and variants quite well.
 
+My contributions are implementation of some reinforcement learning base [components](learning/components.py) like states, actions and policy, then using and translate them to the [Yathzee environment](game/components.py) like combinations of dice to express states, the choice of which dice to keep as actions, the set of three steps to roll dice stages as a policy, and finally implement some algorithms of reinforcment learning like [Monte Carlo](learning/monte_carlo.py) or [Temporal Differences](learning/temporal_differences.py) methods.
 
-# Description de l'environnement
-
-Le projet est constitué de deux modules: `learning` et `game`. Le premier définit les classes et fonctions de base nécessaires à l'apprentissage par renforcement (*eg.* `State()`, `Action()`, méthodes de Monte Carlo, etc...), le deuxième utilise ces éléments de base pour définir une architecture de politique spécifique au jeu du Yathzee. Enfin, le fichier `main.py` permet d'exécuter et tester les algorithmes.
-
-```shell
-+-- learning
-    +-- components.py
-    +-- monte_carlo.py
-    +-- temporal_differences.py
-    +-- utils.py
-
-+-- game
-    +-- components.py
-    +-- rewards.py
-    +-- utils.py
-
-main.py
-```
-
-## Module `learning`
-
-### Fichier `components.py`
-
-Dans ce fichier se trouve l'ensemble des classes de base nécessaires à l'implémentation d'une politique. On y définit les méthodes des base permettant d'ajouter une action à un état, d'obtenir un état d'arrivée après avoir exécuté une action, ou encore d'initialiser une politique uniforme ou aléatoire.
+The only bug I need to fix is to take into account the probability of rolling a given combination of dice.
 
 
-### Fichiers `monte_carlo.py` et `temporal_differences.py`
+## How looks the environment?
 
-Ces deux fichiers contiennent les algorithmes d'apprentissage vus en cours.
-
-
-### Fichier `utils.py`
-
-Ce fichier contient des fonctions utilitaires, comme la sélection aléatoire d'un état et d'une action, le calcul de la "récompense" complète d'un état dans un épisode et la génération d'un épisode.
-
-
-## Module `game`
-
-Ce module permet de modéliser l'environnement, *ie.* la mise en place d'une architecture d'états et d'actions permettant de modéliser le jeu du Yathzee.
-
-
-### Fichier `rewards.py`
-
-Ce fichier définit les fonctions de récompense qu'on obtient en fonction d'une combinaison de dés donnée.
-
-
-### Fichier `utils.py`
-
-Ce fichier contient des fonctions utilitaires, particulièrement nécessaires à la définition de notre environnement comme l'énumération des combinaisons de dés possibles en fonction du nombre de dés qu'on possède.
-
-
-### Fichier `components.py`
-
-Ce fichier définit les classes nécessaires à la modélisation de notre environnement: les états et les actions. Il réutilise les classes de base présentées dans le module précédent, ainsi que les fonctions définies dans `game/rewards.py` et `game/utils.py`
-
-
-#### Classe `Turn()`
-
-Cet objet hérite de notre composant `Policy()` (cf. `learning/components.py`). On y redéfinit la méthode `.__init_states()`, méthode principale dans la mise en place de l'environnement.
-
-
-#### Classe `Combination()`
-
-Cet objet correspond aux états, il hérite donc de notre composant `State()` (cf. `learning/components.py`).
-
-Une combinaison est définit à la fois par la combinaison de dés qu'elle représente, mais aussi par le nombre de fois que le joueur a déjà lancé les dés: `step={0, 1, 2, 3, 4}` (où 4 correspond à l'état terminal "fictif" après avoir choisit le motif final nous rapportant un certain nombre de points).
-
-
-#### Classe `Choice()` et `FinalChoice()`
-
-Ces objets correspondent aux actions qu'on peut effectuer lorsqu'on se trouve dans un état donné, ils héritent donc de notre composant `Action()` (cf. `learning/components.py`).
-
-Une action `Choice()` est effectuée par les états ayant `step={0, 1, 2}`, la récompense obtenue est de $0$. Cette action est définit comme une combinaison de $n$ dés que le joueur conserve. Le joueur relance ensuite les dés restant: une action `Choice()` peut donc mener à plusieurs états différents ayant `step={0, 1, 2} + 1`. Si le joueur conserve tous les dés, alors il arrive directement vers l'état ayant la même combinaison et `step=3`.
-
-Une action `FinalChoice()` est effectuée par les états ayant `step=3`. Il s'agit du choix du motif (*eg.* *Full*, petite suite, Yathzee, etc...) rapportant un certain nombre de points en fonction de la combinaison de dés que le joueur a obtenu: la récompense dépend donc de la combinaison finale et du motif choisi. Cette action mène vers l'état terminal "fictif" (`step=4`), et la récompense correspond au nombre de points obtenu du motif choisit par rapport à la combinaison. De fait, la récompense n'est obtenue qu'à la fin, lors du choix final du motif.
-
-
-## Exemples
-
-Tout d'abord, on initialise l'environnement de la politique en appelant `Turn()`. Le problème est modéliser par $758$ états connectés les uns aux autres par $12 013$ actions.
+To get started, just call `Turn()`. The Yathzee problem is discribed with 758 different states and 12 013 actions linking the states between them.
 
 ```python
 from game.components import Turn
 
-turn = Turn(init_policy='uniform')
+turn = Turn()
 
 n_states = 0
 n_actions = 0
@@ -109,56 +36,105 @@ print('Number of actions: {}'.format(n_actions))
 >>> Number of actions: 12013
 ```
 
-### Modélisation des états
-
-Dans notre cas, on peut distinguer quatre catégories d'états:
-
-- L'état initial `step=0`: aucun dé n'a été lancé, la seule action possible est de lancer tous les dés.
-
+Each state and action got their respective value function as attribute, and the transition probability is stored as action attribute:
 ```python
-# Step = 0
+
+state = turn.states[150]
+action = state.actions[5]
+
+print(state.value_function)
+
+>>> 0
+
+print(action.value_function, action.probability)
+
+>>> 0, 0.041666
+```
+
+
+### The states
+
+There are 3 kind of states:
+- The initial state, where no dice is selected;
+```python
+# First roll
 init_state = turn.states[0]
 
 print(repr(init_state))
 
 >>> {step: 0, combination: ()}
 
-print(init_state.actions)
+print(init_state.actions)  # print the list of resulting actions
 
 >>> [{n_keep: 0, keep_combination: ()}]
 ```
 
-- Les états de transition `step={1, 2, 3}`, correspondant aux 252 combinaisons qu'il est possible d'obtenir après le premier, le deuxième et le troisème lancé de dés. Pour les combinaisons ayant `step={1, 2}`, seules les actions `Choice()` sont possibles: conserver un certain nombre de dés associé à une combinaison possible ; pour les combinaisons ayant `step=3`, seules les actions `FinalChoice()` associées à un nom de motif sont possibles. 
-
+- The transition states, corresponding to the 252 possible combinations on each roll of the dice. Below two different states: the first where the agent have to choose which dice to keep and roll again the others, the second one where the agent cannot roll the dice anymore and it have to choose a pattern to win points;
 ```python
-# Step = 1
+# Second roll
 state = turn.states[150]
 
 print(repr(state))
 
 >>> {step: 1, combination: (2, 2, 3, 5, 6)}
 
-print(state.actions)
+print(state.actions)  # print the list of resulting actions
 
->>> [{n_keep: 0, keep_combination: ()}, {n_keep: 1, keep_combination: (6)}, {n_keep: 1, keep_combination: (2)}, {n_keep: 1, keep_combination: (3)}, {n_keep: 1, keep_combination: (5)}, {n_keep: 2, keep_combination: (2, 3)}, {n_keep: 2, keep_combination: (2, 6)}, {n_keep: 2, keep_combination: (3, 6)}, {n_keep: 2, keep_combination: (5, 6)}, {n_keep: 2, keep_combination: (2, 2)}, {n_keep: 2, keep_combination: (2, 5)}, {n_keep: 2, keep_combination: (3, 5)}, {n_keep: 3, keep_combination: (2, 2, 3)}, {n_keep: 3, keep_combination: (2, 2, 6)}, {n_keep: 3, keep_combination: (2, 3, 6)}, {n_keep: 3, keep_combination: (3, 5, 6)}, {n_keep: 3, keep_combination: (2, 2, 5)}, {n_keep: 3, keep_combination: (2, 3, 5)}, {n_keep: 3, keep_combination: (2, 5, 6)}, {n_keep: 4, keep_combination: (2, 2, 5, 6)}, {n_keep: 4, keep_combination: (2, 2, 3, 5)}, {n_keep: 4, keep_combination: (2, 2, 3, 6)}, {n_keep: 4, keep_combination: (2, 3, 5, 6)}, {n_keep: 5, keep_combination: (2, 2, 3, 5, 6)}]
+>>> [
+    {n_keep: 0, keep_combination: ()},
+    {n_keep: 1, keep_combination: (6)},
+    {n_keep: 1, keep_combination: (2)},
+    {n_keep: 1, keep_combination: (3)},
+    {n_keep: 1, keep_combination: (5)},
+    {n_keep: 2, keep_combination: (2, 3)},
+    {n_keep: 2, keep_combination: (2, 6)},
+    {n_keep: 2, keep_combination: (3, 6)},
+    {n_keep: 2, keep_combination: (5, 6)},
+    {n_keep: 2, keep_combination: (2, 2)},
+    {n_keep: 2, keep_combination: (2, 5)},
+    {n_keep: 2, keep_combination: (3, 5)},
+    {n_keep: 3, keep_combination: (2, 2, 3)},
+    {n_keep: 3, keep_combination: (2, 2, 6)},
+    {n_keep: 3, keep_combination: (2, 3, 6)},
+    {n_keep: 3, keep_combination: (3, 5, 6)},
+    {n_keep: 3, keep_combination: (2, 2, 5)},
+    {n_keep: 3, keep_combination: (2, 3, 5)},
+    {n_keep: 3, keep_combination: (2, 5, 6)},
+    {n_keep: 4, keep_combination: (2, 2, 5, 6)},
+    {n_keep: 4, keep_combination: (2, 2, 3, 5)},
+    {n_keep: 4, keep_combination: (2, 2, 3, 6)},
+    {n_keep: 4, keep_combination: (2, 3, 5, 6)},
+    {n_keep: 5, keep_combination: (2, 2, 3, 5, 6)}
+]
 
-
-# Step = 3
+# Choice of the pattern
 state = turn.states[-150]
 
 print(repr(state))
 
 >>> {step: 3, combination: (1, 3, 4, 4, 6)}
 
-print(state.actions)
+print(state.actions)  # print the list of resulting actions
 
->>> [{pattern: Count_1, keep_combination: (1, 3, 4, 4, 6), reward: 1}, {pattern: Count_2, keep_combination: (1, 3, 4, 4, 6), reward: 0}, {pattern: Count_3, keep_combination: (1, 3, 4, 4, 6), reward: 3}, {pattern: Count_4, keep_combination: (1, 3, 4, 4, 6), reward: 8}, {pattern: Count_5, keep_combination: (1, 3, 4, 4, 6), reward: 0}, {pattern: Count_6, keep_combination: (1, 3, 4, 4, 6), reward: 6}, {pattern: Kind_3, keep_combination: (1, 3, 4, 4, 6), reward: 0}, {pattern: Kind_4, keep_combination: (1, 3, 4, 4, 6), reward: 0}, {pattern: Full, keep_combination: (1, 3, 4, 4, 6), reward: 0}, {pattern: Small_Straight, keep_combination: (1, 3, 4, 4, 6), reward: 0}, {pattern: Large_Straight, keep_combination: (1, 3, 4, 4, 6), reward: 0}, {pattern: Yathzee, keep_combination: (1, 3, 4, 4, 6), reward: 0}, {pattern: Chance, keep_combination: (1, 3, 4, 4, 6), reward: 18}]
+>>> [
+    {pattern: Count_1, keep_combination: (1, 3, 4, 4, 6), reward: 1},
+    {pattern: Count_2, keep_combination: (1, 3, 4, 4, 6), reward: 0},
+    {pattern: Count_3, keep_combination: (1, 3, 4, 4, 6), reward: 3},
+    {pattern: Count_4, keep_combination: (1, 3, 4, 4, 6), reward: 8},
+    {pattern: Count_5, keep_combination: (1, 3, 4, 4, 6), reward: 0},
+    {pattern: Count_6, keep_combination: (1, 3, 4, 4, 6), reward: 6},
+    {pattern: Kind_3, keep_combination: (1, 3, 4, 4, 6), reward: 0},
+    {pattern: Kind_4, keep_combination: (1, 3, 4, 4, 6), reward: 0},
+    {pattern: Full, keep_combination: (1, 3, 4, 4, 6), reward: 0},
+    {pattern: Small_Straight, keep_combination: (1, 3, 4, 4, 6), reward: 0},
+    {pattern: Large_Straight, keep_combination: (1, 3, 4, 4, 6), reward: 0},
+    {pattern: Yathzee, keep_combination: (1, 3, 4, 4, 6), reward: 0},
+    {pattern: Chance, keep_combination: (1, 3, 4, 4, 6), reward: 18}
+]
 ```
 
-- L'état terminal `step=4`: aucune action n'est possible.
-
+- The final state, corresponding to the end of the turn, no action is associated. The agent reach this one after choosing a pattern;
 ```python
-# Step = 4
 terminal_state = turn.states[-1]
 
 print(repr(terminal_state))
@@ -170,108 +146,75 @@ print(terminal_state.actions)
 >>> []
 ```
 
+### The actions
 
-### Modélisation des actions
-
-Comme expliqué précédemment, une action effectuée par un état ayant `step={0, 1, 2}` permet d'aller vers un état ayant `step={0, 1, 2} + 1`. L'ensemble des états d'arrivée correspondent aux combinaisons qu'on peut obtenir à partir de la combinaison de dés que conserve l'action et les autres valeur de dés qu'on peut obtenir. *A ce propos, je n'ai pas réussi à utiliser les probabilités d'effectuer une combinaison particulière. De fait, dans ma modélisation, la probabilité d'arriver dans un état à partir d'une action effectuée est identique pour tous les états d'arrivée (ce qui n'est pas correct: par exemple la probabilité d'obtenir 2 fois la même valeur sur un lancé de deux dés est plus faible que d'obtenir 2 valeurs différentes...). Il faudrait corriger cette erreur.*
-
-Aussi, pour le même état, l'action de conserver les cinq dés emmène directement vers l'état ayant la même combinaison et `step=3`. Dans ce cas, un seul état d'arrivé est possible.
+An action represent the selection of certain dice after having thrown them. Depending on this choice, the agent can reach several different states, linked to the value of dice not kept after having thrown them again. For example, when an agent select four dice, it can reach six different states based on the combination of the selected dice plus the random value of the non-selected dice.
 
 ```python
-# Step = 1, n_keep = 4
-action = turn.states[150].actions[20]
+state = turn.states[150]
+print(repr(state))
 
+>>> {step: 1, combination: (2, 2, 3, 5, 6)}
+
+action = state.actions[20]
 print(action)
 
 >>> {n_keep: 4, keep_combination: (2, 2, 3, 5)}
 
 print(action.to_states)
 
->>> [{step: 2, combination: (1, 2, 2, 3, 5)}, {step: 2, combination: (2, 2, 2, 3, 5)}, {step: 2, combination: (2, 2, 3, 3, 5)}, {step: 2, combination: (2, 2, 3, 4, 5)}, {step: 2, combination: (2, 2, 3, 5, 5)}, {step: 2, combination: (2, 2, 3, 5, 6)}]
-
-# Step = 1, n_keep = 5
-action = turn.states[150].actions[-1]
-
-print(action)
-
->>> {n_keep: 5, keep_combination: (2, 2, 3, 5, 6)}
-
-print(action.to_states)
-
->>> [{step: 3, combination: (2, 2, 3, 5, 6)}]
+>>> [
+    {step: 2, combination: (1, 2, 2, 3, 5)},
+    {step: 2, combination: (2, 2, 2, 3, 5)},
+    {step: 2, combination: (2, 2, 3, 3, 5)},
+    {step: 2, combination: (2, 2, 3, 4, 5)},
+    {step: 2, combination: (2, 2, 3, 5, 5)},
+    {step: 2, combination: (2, 2, 3, 5, 6)}
+]
 ```
 
-Le fait d'effectuer cette action (en appelant la méthode `__call__` de l'objet) nous emmène directement vers l'état suivant:
+A second type of action does exist, called `FinalChoice()` in the code. The agent can only execute it if it has chosen to keep the five dice from the previous stage, or because it has already rolled them three times. This action correspond to the selection of the final pattern that leads directly to the final state, while rewarding the agent with a certain number of points.
 
-```python
-next_state = action()
 
-print(next_state)
+## How to use the algorithms?
 
->>> {step: 3, combination: (2, 2, 3, 5, 6)}
-```
+The use of the reinforcement learning are quite simple. You just need to give a policy object to the function, tune its parameters, and then it will return a new policy with new value function and/or new transition probability between the states.
 
-Enfin, l'éxécution d'une action `FinalChoice()` nous emmène bien vers le dernier état terminal, ce qui met fin à notre tour:
+*Making a visualisation of this problem is not the easiest thing, I should think about it!*
 
-```python
-final_states = []
-for action in next_state.actions:
-    final_states.append(action())
+The following parameters correspond to:
+- `gamma`: the discount rate to compute the complete return of a state
+- `n_iter`: the number of iteration to let the agent explore and exploit its opportunities
 
-print(np.all(final_state))
 
->>> True
-```
-
-# Utilisation des algorithmes
-
-Il est assez compliqué de visualiser les résultats que l'on obtient, mais il semble que les méthodes d'apprentissage fonctionnent plutôt bien. Étant donné que les actions pouvant être effectuées dépendent bien de l'état dans lequel on est, et que les actions mènent bien vers les états qu'il est possible d'obtenir, il n'y a pas de raison que les algorithmes fonctionnent moins bien que précédemment...
-
-## Méthodes de Monte Carlo
+### Monte Carlo methods
 
 ```python
 from learning.monte_carlo import predictions, exploring_starts, on_policy_control
 
 n_iter = 100000
 gamma = .8
-```
 
-### Monte Carlo *Predictions*
-
-```python
 predictions_policy = predictions(turn, gamma=gamma, n_iter=n_iter, first_visit=True)
-```
-
-
-### Monte Carlo *Exploring Start*
-
-```python
 exploring_starts_policy = exploring_starts(turn, gamma=gamma, n_iter=n_iter)
-```
-
-
-### Monte Carlo *On Policy Control*
-
-```python
 on_policy_control_policy = on_policy_control(turn, gamma=gamma, epsilon=.25, n_iter=n_iter, first_visit=True)
 ```
 
-## Méthodes *Temporal Differences*
+With:
+- `first_visit`: if `True` use the complete return of the first state visit, otherwise use the complete return of every visits;
+- `epsilon`: the epislon-greedy policy parameter, 0 means full exploitation, 1 means full exploration;
+
+
+### Temporal differences methods
 
 ```python
 from learning.temporal_differences import td0, sarsa
 
 alpha = .5
+
+td0_policy = td0(turn, alpha=alpha, gamma=gamma, n_iter=n_iter)
+sarsa_policy = sarsa(turn, alpha=alpha, gamma=gamma, n_iter=n_iter)
 ```
 
-### TD0
-
-```python
-td0_policy = td0(turn, alpha=alpha, gamma=gamma, n_iter=N_ITER)
-```
-
-### SARSA
-
-```python
-sarsa_policy = sarsa(turn, alpha=alpha, gamma=gamma, n_iter=N_ITER)
-```
+With:
+- `alpha`: a step-size parameter
