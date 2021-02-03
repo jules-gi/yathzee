@@ -2,7 +2,7 @@
 
 Reference: [Richard S. Sutton and Andrew G. Barto, Reinforcement Learning, second edition: An Introduction](https://web.stanford.edu/class/psych209/Readings/SuttonBartoIPRLBook2ndEd.pdf)
 
-# What dices to choose when playing Yathzee? A reinforcement learning approach
+# What dice to choose when playing Yathzee? A reinforcement learning approach
 
 As an introduction to reinforcement learning, the final project of my master's course was to set up an environment to teach to an AI (called "agent") how to play a turn of Yathzee (or Yam's). For this, I used Python! If you are not familiar with the Yathzee, [Wikipedia](https://en.wikipedia.org/wiki/Yahtzee) explain the rules and variants quite well.
 
